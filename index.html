@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bağlı Liste — Görsel Öğrenme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --border: #e8e8ec;
+      --text: #1a1a1f;
+      --muted: #6b6b76;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --success: #059669;
+      --danger: #dc2626;
+      --traverse: #7c3aed;
+      --traverse-soft: #f3e8ff;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "DM Sans", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.35rem;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .stage {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 1.5rem;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.75rem;
+      overflow-x: auto;
+    }
+
+    .list-visual {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: nowrap;
+      padding: 0.5rem 0;
+    }
+
+    .node {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .node-box {
+      min-width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 500;
+      font-size: 1.05rem;
+      transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.2s ease;
+    }
+
+    .node-box.traverse-active {
+      background: var(--traverse-soft);
+      border-color: var(--traverse);
+      color: var(--traverse);
+      transform: scale(1.06);
+    }
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 0.35rem;
+      color: var(--muted);
+      font-size: 1.1rem;
+      user-select: none;
+    }
+
+    .null-tail {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-left: 0.25rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .empty-hint {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .output-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      min-height: 2.75rem;
+      display: flex;
+      align-items: center;
+      word-break: break-all;
+    }
+
+    .output-bar .label {
+      color: var(--muted);
+      margin-right: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .output-bar .val {
+      color: var(--text);
+    }
+
+    .output-bar.error .val {
+      color: var(--danger);
+    }
+
+    .output-bar.ok .val {
+      color: var(--success);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.1rem 1.15rem;
+    }
+
+    .panel h2 {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 0.85rem;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.88rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      width: 100px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.5rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: #d0d0d8;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+
+    button.traverse-btn {
+      background: var(--traverse);
+      border-color: var(--traverse);
+      color: #fff;
+    }
+
+    button.traverse-btn:hover:not(:disabled) {
+      background: #6d28d9;
+      border-color: #6d28d9;
+    }
+
+    .wide {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .traverse-panel {
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 600px) {
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        max-width: 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Bağlı liste</h1>
+      <p>İşlemleri deneyin; ortadaki kutular gerçek bir zinciri temsil eder (her düğümün bir <code>next</code> işaretçisi vardır).</p>
+    </header>
+
+    <div class="output-bar" id="output" role="status">
+      <span class="label">Çıktı:</span>
+      <span class="val" id="outputVal">Hazır.</span>
+    </div>
+
+    <div class="stage" id="stage" aria-live="polite">
+      <span class="empty-hint" id="emptyHint">Liste boş — <strong>add</strong> ile eleman ekleyin.</span>
+      <div class="list-visual" id="listVisual" hidden></div>
+    </div>
+
+    <div class="controls">
+      <div class="panel">
+        <h2>get(index)</h2>
+        <div class="row">
+          <input type="number" id="getIdx" min="0" placeholder="index" />
+          <button type="button" id="btnGet">Çalıştır</button>
+        </div>
+        <p class="hint">Verilen indexteki değeri döndürür.</p>
+      </div>
+
+      <div class="panel">
+        <h2>set(value, index)</h2>
+        <div class="row">
+          <input type="text" id="setVal" placeholder="değer" />
+          <input type="number" id="setIdx" min="0" placeholder="index" />
+          <button type="button" id="btnSet">Çalıştır</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>add(value)</h2>
+        <div class="row">
+          <input type="text" id="addEndVal" placeholder="değer" />
+          <button type="button" id="btnAddEnd">Sona ekle</button>
+        </div>
+        <p class="hint">Listenin sonuna ekler.</p>
+      </div>
+
+      <div class="panel">
+        <h2>add(value, index)</h2>
+        <div class="row">
+          <input type="text" id="addIdxVal" placeholder="değer" />
+          <input type="number" id="addIdx" min="0" placeholder="index" />
+          <button type="button" id="btnAddAt">Araya ekle</button>
+        </div>
+        <p class="hint">Sırayı koruyarak verilen indexe yerleştirir.</p>
+      </div>
+
+      <div class="panel">
+        <h2>remove(index)</h2>
+        <div class="row">
+          <input type="number" id="removeIdx" min="0" placeholder="index" />
+          <button type="button" id="btnRemove">Sil</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>size() &amp; print()</h2>
+        <div class="row">
+          <button type="button" id="btnSize">size()</button>
+          <button type="button" id="btnPrint">print()</button>
+        </div>
+      </div>
+
+      <div class="panel traverse-panel">
+        <h2>traverse — baştan sona gezinti</h2>
+        <p class="hint" style="margin: 0 0 0.75rem;">Her düğüm sırayla vurgulanır; gezinti bitince renkler normale döner.</p>
+        <button type="button" class="traverse-btn wide" id="btnTraverse">Traverse</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class ListNode {
+      constructor(value) {
+        this.value = value;
+        this.next = null;
+      }
+    }
+
+    class LinkedList {
+      constructor() {
+        this.head = null;
+        this._size = 0;
+      }
+
+      size() {
+        return this._size;
+      }
+
+      _nodeAt(index) {
+        if (index < 0 || index >= this._size) return null;
+        let cur = this.head;
+        for (let i = 0; i < index; i++) cur = cur.next;
+        return cur;
+      }
+
+      get(index) {
+        const n = this._nodeAt(index);
+        return n ? n.value : undefined;
+      }
+
+      set(value, index) {
+        const n = this._nodeAt(index);
+        if (!n) return false;
+        n.value = value;
+        return true;
+      }
+
+      add(value, index) {
+        const node = new ListNode(value);
+        if (index === undefined || index === null) {
+          if (!this.head) {
+            this.head = node;
+          } else {
+            let tail = this.head;
+            while (tail.next) tail = tail.next;
+            tail.next = node;
+          }
+          this._size++;
+          return true;
+        }
+        if (index < 0 || index > this._size) return false;
+        if (index === 0) {
+          node.next = this.head;
+          this.head = node;
+          this._size++;
+          return true;
+        }
+        const prev = this._nodeAt(index - 1);
+        if (!prev) return false;
+        node.next = prev.next;
+        prev.next = node;
+        this._size++;
+        return true;
+      }
+
+      remove(index) {
+        if (index < 0 || index >= this._size) return undefined;
+        if (index === 0) {
+          const v = this.head.value;
+          this.head = this.head.next;
+          this._size--;
+          return v;
+        }
+        const prev = this._nodeAt(index - 1);
+        const target = prev.next;
+        prev.next = target.next;
+        this._size--;
+        return target.value;
+      }
+
+      toArray() {
+        const out = [];
+        let cur = this.head;
+        while (cur) {
+          out.push(cur.value);
+          cur = cur.next;
+        }
+        return out;
+      }
+
+      /** Düğümler sırayla (görsel eşleme için) */
+      nodesArray() {
+        const out = [];
+        let cur = this.head;
+        while (cur) {
+          out.push(cur);
+          cur = cur.next;
+        }
+        return out;
+      }
+    }
+
+    const list = new LinkedList();
+    const outputEl = document.getElementById("output");
+    const outputVal = document.getElementById("outputVal");
+    const emptyHint = document.getElementById("emptyHint");
+    const listVisual = document.getElementById("listVisual");
+
+    let traverseRunning = false;
+
+    function setOutput(text, kind) {
+      outputVal.textContent = text;
+      outputEl.classList.remove("error", "ok");
+      if (kind === "error") outputEl.classList.add("error");
+      if (kind === "ok") outputEl.classList.add("ok");
+    }
+
+    function render() {
+      const nodes = list.nodesArray();
+      if (nodes.length === 0) {
+        emptyHint.hidden = false;
+        listVisual.hidden = true;
+        listVisual.innerHTML = "";
+        return;
+      }
+      emptyHint.hidden = true;
+      listVisual.hidden = false;
+      listVisual.innerHTML = "";
+      nodes.forEach((node, i) => {
+        const wrap = document.createElement("div");
+        wrap.className = "node";
+        wrap.dataset.nodeId = String(i);
+        const box = document.createElement("div");
+        box.className = "node-box";
+        box.textContent = String(node.value);
+        box.dataset.nodeId = String(i);
+        wrap.appendChild(box);
+        listVisual.appendChild(wrap);
+        if (i < nodes.length - 1) {
+          const arr = document.createElement("span");
+          arr.className = "arrow";
+          arr.textContent = "→";
+          listVisual.appendChild(arr);
+        }
+      });
+      const tail = document.createElement("span");
+      tail.className = "null-tail";
+      tail.textContent = "null";
+      listVisual.appendChild(tail);
+    }
+
+    function getBoxElementsInOrder() {
+      return Array.from(listVisual.querySelectorAll(".node-box"));
+    }
+
+    function setAllActionButtons(disabled) {
+      document.querySelectorAll(".controls button").forEach((b) => {
+        b.disabled = disabled;
+      });
+    }
+
+    async function runTraverse() {
+      if (traverseRunning) return;
+      const boxes = getBoxElementsInOrder();
+      if (boxes.length === 0) {
+        setOutput("traverse: liste boş.", "error");
+        return;
+      }
+      traverseRunning = true;
+      setAllActionButtons(true);
+      setOutput("traverse: " + list.toArray().join(" → "), "ok");
+      const delay = 650;
+      try {
+        for (let i = 0; i < boxes.length; i++) {
+          boxes[i].classList.add("traverse-active");
+          await new Promise((r) => setTimeout(r, delay));
+          boxes[i].classList.remove("traverse-active");
+          await new Promise((r) => setTimeout(r, 120));
+        }
+        setOutput("traverse tamamlandı.", "ok");
+      } finally {
+        traverseRunning = false;
+        setAllActionButtons(false);
+      }
+    }
+
+    function parseValue(raw) {
+      const s = String(raw).trim();
+      if (s === "") return { ok: false, error: "Değer boş olamaz." };
+      const num = Number(s);
+      if (s !== "" && !Number.isNaN(num) && String(num) === s) return { ok: true, value: num };
+      return { ok: true, value: s };
+    }
+
+    document.getElementById("btnGet").addEventListener("click", () => {
+      const idx = Number(document.getElementById("getIdx").value);
+      if (!Number.isInteger(idx) || idx < 0) {
+        setOutput("Geçerli bir index girin (≥ 0).", "error");
+        return;
+      }
+      const v = list.get(idx);
+      if (v === undefined) setOutput("get(" + idx + "): geçersiz index.", "error");
+      else setOutput("get(" + idx + ") → " + JSON.stringify(v), "ok");
+    });
+
+    document.getElementById("btnSet").addEventListener("click", () => {
+      const p = parseValue(document.getElementById("setVal").value);
+      if (!p.ok) {
+        setOutput(p.error, "error");
+        return;
+      }
+      const idx = Number(document.getElementById("setIdx").value);
+      if (!Number.isInteger(idx) || idx < 0) {
+        setOutput("Geçerli bir index girin.", "error");
+        return;
+      }
+      if (list.set(p.value, idx)) {
+        render();
+        setOutput("set(" + JSON.stringify(p.value) + ", " + idx + ") tamam.", "ok");
+      } else setOutput("set: geçersiz index.", "error");
+    });
+
+    document.getElementById("btnAddEnd").addEventListener("click", () => {
+      const p = parseValue(document.getElementById("addEndVal").value);
+      if (!p.ok) {
+        setOutput(p.error, "error");
+        return;
+      }
+      list.add(p.value);
+      render();
+      setOutput("add(" + JSON.stringify(p.value) + ") — sona eklendi. size() = " + list.size(), "ok");
+    });
+
+    document.getElementById("btnAddAt").addEventListener("click", () => {
+      const p = parseValue(document.getElementById("addIdxVal").value);
+      if (!p.ok) {
+        setOutput(p.error, "error");
+        return;
+      }
+      const idx = Number(document.getElementById("addIdx").value);
+      if (!Number.isInteger(idx) || idx < 0) {
+        setOutput("Geçerli bir index girin.", "error");
+        return;
+      }
+      if (list.add(p.value, idx)) {
+        render();
+        setOutput("add(" + JSON.stringify(p.value) + ", " + idx + ") tamam. size() = " + list.size(), "ok");
+      } else setOutput("add: index 0 ile size() arasında olmalı.", "error");
+    });
+
+    document.getElementById("btnRemove").addEventListener("click", () => {
+      const idx = Number(document.getElementById("removeIdx").value);
+      if (!Number.isInteger(idx) || idx < 0) {
+        setOutput("Geçerli bir index girin.", "error");
+        return;
+      }
+      const v = list.remove(idx);
+      if (v === undefined) setOutput("remove: geçersiz index.", "error");
+      else {
+        render();
+        setOutput("remove(" + idx + ") → " + JSON.stringify(v) + " | size() = " + list.size(), "ok");
+      }
+    });
+
+    document.getElementById("btnSize").addEventListener("click", () => {
+      setOutput("size() → " + list.size(), "ok");
+    });
+
+    document.getElementById("btnPrint").addEventListener("click", () => {
+      const arr = list.toArray();
+      setOutput("print() → [ " + arr.map((x) => JSON.stringify(x)).join(", ") + " ]", "ok");
+    });
+
+    document.getElementById("btnTraverse").addEventListener("click", () => {
+      runTraverse();
+    });
+
+    render();
+  </script>
+</body>
+</html>
